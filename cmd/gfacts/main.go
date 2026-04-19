@@ -19,6 +19,7 @@ func main() {
 	debug := flag.Bool("debug", false, "Enable debug logging")
 	noExternal := flag.Bool("no-external", false, "Skip external facts")
 	externalDir := flag.String("external-dir", "", "Additional external fact directory")
+	essential := flag.Bool("essential", false, "Output only essential facts")
 	showVersion := flag.Bool("version", false, "Print version and exit")
 	flag.Parse()
 
@@ -37,7 +38,13 @@ func main() {
 		opts.ExternalDirs = append(opts.ExternalDirs, *externalDir)
 	}
 
-	facts, err := gfacts.GatherWithOptions(opts)
+	var facts map[string]any
+	var err error
+	if *essential {
+		facts, err = gfacts.GatherEssentialWithOptions(opts)
+	} else {
+		facts, err = gfacts.GatherWithOptions(opts)
+	}
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)

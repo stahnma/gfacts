@@ -53,6 +53,49 @@ func Value(key string) (any, error) {
 	return lookup(facts, key), nil
 }
 
+// EssentialKeys is the curated set of facts returned by GatherEssential.
+var EssentialKeys = []string{
+	"os.name",
+	"os.family",
+	"os.architecture",
+	"os.distro.id",
+	"os.distro.release.full",
+	"kernel.name",
+	"kernel.release",
+	"processors.count",
+	"processors.models",
+	"processors.speed",
+	"memory.system.total",
+	"memory.system.total_bytes",
+	"networking.ip",
+	"networking.hostname",
+	"networking.fqdn",
+	"hardware.product.name",
+	"hardware.product.description",
+	"uptime.uptime",
+	"virtual.is_virtual",
+}
+
+// GatherEssential returns only the most commonly needed facts.
+func GatherEssential() (map[string]any, error) {
+	return GatherEssentialWithOptions(DefaultOptions())
+}
+
+// GatherEssentialWithOptions returns only essential facts using the provided options.
+func GatherEssentialWithOptions(opts Options) (map[string]any, error) {
+	all, err := GatherWithOptions(opts)
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[string]any, len(EssentialKeys))
+	for _, key := range EssentialKeys {
+		if v, ok := all[key]; ok {
+			result[key] = v
+		}
+	}
+	return result, nil
+}
+
 // Register adds a static programmatic fact that takes precedence over
 // core and external facts.
 func Register(key string, value any) {
