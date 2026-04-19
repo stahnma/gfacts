@@ -1,6 +1,7 @@
 BINARY    := gfacts
 MODULE    := github.com/stahnma/gfacts
 VERSION   ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+export CGO_ENABLED := 0
 GOFLAGS   := -trimpath
 LDFLAGS   := -s -w -X main.version=$(VERSION)
 
