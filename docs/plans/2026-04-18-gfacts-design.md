@@ -15,7 +15,7 @@ Primary use case: `import "github.com/<owner>/gfacts"` in Go infrastructure tool
 
 - Linux and macOS support
 - Pure Go (no CGO), exec/shell as last resort
-- Core fact categories: os, kernel, networking, processors, memory, dmi, disks, mountpoints, uptime, cloud, virtual, ssh
+- Core fact categories: os, kernel, networking, processors, memory, hardware, disks, mountpoints, uptime, cloud, virtual, ssh
 - External facts: static files (JSON, TXT) and executables in `/etc/gfacts/gfacts.d/`
 - Programmatic fact registration
 - CLI binary (`gfacts`)
@@ -87,8 +87,8 @@ gfacts/
 │   ├── processors_darwin.go
 │   ├── memory_linux.go
 │   ├── memory_darwin.go
-│   ├── dmi_linux.go
-│   ├── dmi_darwin.go
+│   ├── hardware_linux.go
+│   ├── hardware_darwin.go
 │   ├── disks_linux.go
 │   ├── disks_darwin.go
 │   ├── mountpoints_linux.go
@@ -137,7 +137,7 @@ All collectors run in parallel via `sync.WaitGroup`. Errors are logged but do no
 | networking | `/sys/class/net/`, `net.Interfaces()`, `/proc/net/route`, `/etc/resolv.conf` |
 | processors | `/proc/cpuinfo` |
 | memory | `/proc/meminfo` |
-| dmi | `/sys/class/dmi/id/*` |
+| hardware | `/sys/class/dmi/id/*` |
 | disks | `/sys/block/`, `/proc/partitions` |
 | mountpoints | `/proc/mounts`, `syscall.Statfs` |
 | uptime | `/proc/uptime` |
@@ -154,7 +154,7 @@ All collectors run in parallel via `sync.WaitGroup`. Errors are logged but do no
 | networking | `net.Interfaces()`, route syscall messages, `/etc/resolv.conf` |
 | processors | `sysctl hw.ncpu`, `machdep.cpu.*` |
 | memory | `sysctl hw.memsize`, `vm.swapusage` |
-| dmi | `sysctl hw.model` (limited on Mac) |
+| hardware | `sysctl hw.model`, `system_profiler`, `ioreg` (cached with 30-day TTL) |
 | disks | `syscall.Statfs` for volumes; `diskutil list -plist` via exec for physical disks |
 | mountpoints | `syscall.Statfs` |
 | uptime | `sysctl kern.boottime` (raw bytes, manual struct unpacking) |
@@ -167,7 +167,7 @@ All collectors run in parallel via `sync.WaitGroup`. Errors are logged but do no
 These are cases where shelling out is necessary because no pure Go alternative exists:
 
 - **macOS disks**: `diskutil list -plist` for physical disk enumeration
-- Possibly more discovered during implementation; each should be documented
+- **macOS hardware**: `system_profiler SPHardwareDataType` and `ioreg -r -c IOPlatformDevice` for hardware profile (model name, description, serial, etc.) — cached at `~/.cache/gfacts/hardware_profile.json` with a 30-day TTL
 
 ## External Facts
 
@@ -272,7 +272,7 @@ Individual collector failures must not fail the entire `Gather()` call. Log the 
 These are explicitly out of scope for v1 but the design should not prevent them:
 
 - **Additional platforms**: BSD, Solaris. Build tags make this additive — new `_freebsd.go` files, no changes to existing code.
-- **Fact caching with TTL**: Some facts (cloud metadata, DMI) change rarely. A caching layer could avoid re-resolution.
+- **Fact caching with TTL**: Some facts (cloud metadata, hardware) change rarely. A caching layer could avoid re-resolution.
 - **Structured typed API**: Typed accessors like `gfacts.OS()` returning a struct, built on top of the map API.
 - **gRPC / HTTP server mode**: Expose facts over the network for agent-based architectures.
 

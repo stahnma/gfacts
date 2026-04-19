@@ -114,11 +114,11 @@ func TestDMICollector(t *testing.T) {
 		t.Fatalf("DMICollector error: %v", err)
 	}
 
-	if _, ok := facts["dmi.product.name"]; !ok {
-		t.Error("missing dmi.product.name")
+	if _, ok := facts["hardware.product.name"]; !ok {
+		t.Error("missing hardware.product.name")
 	}
-	if facts["dmi.product.vendor"] != "Apple Inc." {
-		t.Errorf("expected Apple Inc., got %v", facts["dmi.product.vendor"])
+	if facts["hardware.product.vendor"] != "Apple Inc." {
+		t.Errorf("expected Apple Inc., got %v", facts["hardware.product.vendor"])
 	}
 }
 
